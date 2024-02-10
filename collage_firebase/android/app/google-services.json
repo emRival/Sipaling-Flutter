@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "617432024008",
+    "firebase_url": "https://collagefirebase-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "collagefirebase",
+    "storage_bucket": "collagefirebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:617432024008:android:64e49e53d2dc7b9e8636fd",
+        "android_client_info": {
+          "package_name": "com.example.collage_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA__ldHPm055jmQaIUniIDBFi7ZEpcoHkc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
