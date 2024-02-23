@@ -91,9 +91,9 @@ class _MainPageState extends State<MainPage> {
               builder: (BuildContext context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting ||
                     snapshot.data == null) {
-                  return Center(
+                  return const Center(
                     child: SpinKitCircle(
-                      color: Colors.amber,
+                      color: Color.fromARGB(255, 133, 117, 71),
                       size: 50,
                     ),
                   );

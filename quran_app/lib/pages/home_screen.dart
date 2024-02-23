@@ -127,7 +127,7 @@ Column _salam() => Column(
         Stack(
           children: [
             Container(
-              height: 131,
+              height: 140,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15),
                 gradient: const LinearGradient(

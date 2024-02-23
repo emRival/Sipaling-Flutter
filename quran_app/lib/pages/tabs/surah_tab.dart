@@ -1,10 +1,10 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_app/model/surah_model.dart';
-import 'package:quran_app/pages/detail_screen.dart';
+import 'package:quran_app/pages/detail_screen1.dart';
+
 import 'package:quran_app/viewmodel/surah_viewmodel.dart';
 
 class TabSurah extends StatelessWidget {
@@ -12,10 +12,10 @@ class TabSurah extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SurahViewModel _viewModel = SurahViewModel();
+    final SurahViewModel viewModel = SurahViewModel();
 
     return FutureBuilder<List<Surah>>(
-        future: _viewModel.getListSurah(),
+        future: viewModel.getListSurah(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(
@@ -24,9 +24,9 @@ class TabSurah extends StatelessWidget {
           }
           return ListView.separated(
               itemBuilder: (context, index) => _itemList(
-                    context: context,
-                    surah: snapshot.data!.elementAt(index),
-                  ),
+                  context: context,
+                  surah: snapshot.data!.elementAt(index),
+                 ),
               separatorBuilder: (context, index) => Divider(
                     color: Colors.grey.withOpacity(0.1),
                     height: 1,
@@ -35,10 +35,18 @@ class TabSurah extends StatelessWidget {
         });
   }
 
-  Widget _itemList({required BuildContext context, required Surah surah}) =>
+  Widget _itemList(
+          {required BuildContext context,
+          required Surah surah,
+          }) =>
       InkWell(
         onTap: () {
-          Navigator.pushNamed(context, DetailScreen.routeName, arguments: surah.nomor);
+         
+          Navigator.pushNamed(
+            context,
+            DetailScreen1.routeName,
+            arguments: surah.nomor.toString(),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
