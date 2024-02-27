@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,26 +21,28 @@ class TabSurah extends StatelessWidget {
               child: Text("Tidak Ada Data"),
             );
           }
-          return ListView.separated(
-              itemBuilder: (context, index) => _itemList(
-                  context: context,
-                  surah: snapshot.data!.elementAt(index),
-                 ),
-              separatorBuilder: (context, index) => Divider(
-                    color: Colors.grey.withOpacity(0.1),
-                    height: 1,
-                  ),
-              itemCount: snapshot.data!.length);
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: ListView.separated(
+                itemBuilder: (context, index) => _itemList(
+                      context: context,
+                      surah: snapshot.data!.elementAt(index),
+                    ),
+                separatorBuilder: (context, index) => Divider(
+                      color: Colors.grey.withOpacity(0.1),
+                      height: 1,
+                    ),
+                itemCount: snapshot.data!.length),
+          );
         });
   }
 
-  Widget _itemList(
-          {required BuildContext context,
-          required Surah surah,
-          }) =>
+  Widget _itemList({
+    required BuildContext context,
+    required Surah surah,
+  }) =>
       InkWell(
         onTap: () {
-         
           Navigator.pushNamed(
             context,
             DetailScreen1.routeName,
