@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:quran_app/pages/detail_screen1.dart';
+import 'package:quran_app/pages/detail_screen.dart';
 import 'package:quran_app/pages/home_screen.dart';
 import 'package:quran_app/pages/splash_screen.dart';
 

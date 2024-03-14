@@ -20,6 +20,7 @@ dependencies:
   http: ^1.2.1
   just_audio: ^0.9.36
   share_plus: ^5.0.0
+  curved_navigation_bar: ^1.0.3
 
 dev_dependencies:
   flutter_test:
