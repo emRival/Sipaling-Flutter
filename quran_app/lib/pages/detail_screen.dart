@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:quran_app/model/ayah_model.dart';
 import 'package:quran_app/pages/DetailScreenRetry.dart';
 import 'package:quran_app/pages/bookmark/bookmark_util.dart';
+
 import 'package:quran_app/viewmodel/ayah_viewmodel.dart';
 
 class DetailScreen1 extends StatefulWidget {
@@ -26,11 +27,12 @@ class _DetailScreen1State extends State<DetailScreen1> {
   late final AudioPlayer _player;
   late bool _isAudioLoaded;
 
-  late double _arrfontSize = 20;
+  late double _arrfontSize;
 
   @override
   void initState() {
     super.initState();
+    _arrfontSize = 20.0;
     _loadData(); // Panggil _loadData() di sini
     _player = AudioPlayer();
     _isAudioLoaded = false;
@@ -128,23 +130,14 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
-  Widget _itemList(
-      {required BuildContext context,
-      required Ayat ayat,
-      required AyahModel surah}) {
-    final lastReadBox = Hive.box('last_read_quran');
-    final int? lastReadSurahId = lastReadBox.get('last_read')?['id'];
-    final int? lastReadAyatNumber = lastReadBox.get('last_read')?['nomor_ayat'];
-
+  Widget _itemList({
+    required BuildContext context,
+    required Ayat ayat,
+    required AyahModel surah,
+  }) {
     final bookmarksBox = Hive.box('bookmarks_quran');
-    final String bookmarkKey =
-        '${ayat.surah}_${ayat.nomor}'; // Kombinasi surat dan nomor ayat sebagai kunci
-
-    // Check if the bookmark already exists
-    bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
-
-    final bool isLastRead =
-        lastReadSurahId == surah.nomor && lastReadAyatNumber == ayat.nomor;
+    final String bookmarkKey = '${ayat.surah}_${ayat.nomor}';
+    final bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
 
     return InkWell(
       onLongPress: () {
@@ -152,66 +145,84 @@ class _DetailScreen1State extends State<DetailScreen1> {
             context, surah, ayat.nomor!, ayat, bookmarkExists, bookmarkKey);
       },
       child: Container(
-        color: isLastRead ? Colors.yellow : Colors.transparent,
+        color: _getColorForLastReadItem(ayat, surah),
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Stack(
-              children: [
-                SvgPicture.asset(
-                  'assets/svg/nomor_surah.svg',
-                  color: bookmarkExists ? Colors.green : Colors.purple,
-                ),
-                SizedBox(
-                  height: 36,
-                  width: 36,
-                  child: Center(
-                    child: Text(
-                      ayat.nomor.toString(),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(
-              width: 15,
-            ),
+            _buildNumberIcon(bookmarkExists, ayat),
+            const SizedBox(width: 15),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    ayat.ar.toString(),
-                    style: GoogleFonts.amiriQuran(
-                      color:
-                          Colors.black, // Ubah warna jika ayat adalah last read
-                      fontWeight: FontWeight.w500,
-                      fontSize: _arrfontSize.toDouble(),
-                      height: 2.5,
-                    ),
-                    textAlign: TextAlign.end,
-                  ),
+                  _buildArabicText(ayat),
                   const SizedBox(height: 15),
-                  Container(
-                    alignment: Alignment.topLeft,
-                    child: Text(
-                      ayat.tr.toString(),
-                      style: GoogleFonts.amiri(
-                        color: Colors
-                            .black, // Ubah warna jika ayat adalah last read
-                        fontWeight: FontWeight.w300,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
+                  _buildTranslationText(ayat),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Color _getColorForLastReadItem(Ayat ayat, AyahModel surah) {
+    final lastReadBox = Hive.box('last_read_quran');
+    final int? lastReadSurahId = lastReadBox.get('last_read')?['id'];
+    final int? lastReadAyatNumber = lastReadBox.get('last_read')?['nomor_ayat'];
+    final bool isLastRead =
+        lastReadSurahId == surah.nomor && lastReadAyatNumber == ayat.nomor;
+
+    return isLastRead ? Colors.yellow : Colors.transparent;
+  }
+
+  Widget _buildNumberIcon(bool bookmarkExists, Ayat ayat) {
+    return Stack(
+      children: [
+        SvgPicture.asset(
+          'assets/svg/nomor_surah.svg',
+          color: bookmarkExists ? Colors.green : Colors.purple,
+        ),
+        SizedBox(
+          height: 36,
+          width: 36,
+          child: Center(
+            child: Text(
+              ayat.nomor.toString(),
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildArabicText(Ayat ayat) {
+    return Text(
+      ayat.ar.toString(),
+      style: GoogleFonts.amiriQuran(
+        color: Colors.black,
+        fontWeight: FontWeight.w500,
+        fontSize: _arrfontSize.toDouble(),
+        height: 2.5,
+      ),
+      textAlign: TextAlign.end,
+    );
+  }
+
+  Widget _buildTranslationText(Ayat ayat) {
+    return Container(
+      alignment: Alignment.topLeft,
+      child: Text(
+        ayat.tr.toString(),
+        style: GoogleFonts.amiri(
+          color: Colors.black,
+          fontWeight: FontWeight.w300,
+          fontSize: 14,
         ),
       ),
     );
@@ -435,8 +446,13 @@ class _DetailScreen1State extends State<DetailScreen1> {
     }
   }
 
-  void _showSettingDialog(BuildContext context) {
+  void _updateFontSize(double value) {
+    setState(() {
+      _arrfontSize = value;
+    });
+  }
 
+  void _showSettingDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -448,34 +464,28 @@ class _DetailScreen1State extends State<DetailScreen1> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 const Text(
-                    "Font Size",
-                    style:
-                        TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
-                  ),
+                  Text("Font Size: ${_arrfontSize.toInt()}"),
                   SizedBox(height: 16.0),
                   Row(
                     children: [
-                    const  Icon(
+                      const Icon(
                         Icons.format_size,
                         size: 18, // Ukuran ikon kecil
                       ),
                       Expanded(
                         child: Slider(
-                          value: _arrfontSize.toDouble(),
+                          value: _arrfontSize,
                           min: 16.0,
                           max: 30.0,
-                          divisions: _arrfontSize.toInt(),
-                          label: _arrfontSize.round().toString(),
+                          divisions: 100,
                           onChanged: (double value) {
                             setState(() {
-                              _arrfontSize = value;
+                              _updateFontSize(value);
                             });
-                            
                           },
                         ),
                       ),
-                    const  Icon(
+                      const Icon(
                         Icons.format_size,
                         size: 25, // Ukuran ikon besar
                       ),

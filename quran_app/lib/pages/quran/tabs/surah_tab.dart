@@ -74,7 +74,7 @@ class TabSurah extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      surah.nama_latin,
+                      surah.nama_latin.toString(),
                       style: GoogleFonts.poppins(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -91,7 +91,7 @@ class TabSurah extends StatelessWidget {
                 ),
               ),
               Text(
-                surah.nama,
+                surah.nama.toString(),
                 style: GoogleFonts.poppins(
                     color: Colors.black,
                     fontWeight: FontWeight.w800,

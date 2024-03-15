@@ -80,13 +80,13 @@ class Ayat {
 
   Ayat({this.id, this.surah, this.nomor, this.ar, this.tr, this.idn});
 
-  Ayat.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    surah = json['surah'];
-    nomor = json['nomor'];
-    ar = json['ar'];
-    tr = json['tr'];
-    idn = json['idn'];
+  Ayat.fromJson(Map<String, dynamic>? json) {
+    id = json?['id'];
+    surah = json?['surah'];
+    nomor = json?['nomor'];
+    ar = json?['ar'];
+    tr = json?['tr'];
+    idn = json?['idn'];
   }
 
   Map<String, dynamic> toJson() {
@@ -123,16 +123,16 @@ class SuratSelanjutnya {
       this.deskripsi,
       this.audio});
 
-  SuratSelanjutnya.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    nomor = json['nomor'];
-    nama = json['nama'];
-    namaLatin = json['nama_latin'];
-    jumlahAyat = json['jumlah_ayat'];
-    tempatTurun = json['tempat_turun'];
-    arti = json['arti'];
-    deskripsi = json['deskripsi'];
-    audio = json['audio'];
+  SuratSelanjutnya.fromJson(Map<String, dynamic>? json) {
+    id = json?['id'];
+    nomor = json?['nomor'];
+    nama = json?['nama'];
+    namaLatin = json?['nama_latin'];
+    jumlahAyat = json?['jumlah_ayat'];
+    tempatTurun = json?['tempat_turun'];
+    arti = json?['arti'];
+    deskripsi = json?['deskripsi'];
+    audio = json?['audio'];
   }
 
   Map<String, dynamic> toJson() {
