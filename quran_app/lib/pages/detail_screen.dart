@@ -28,6 +28,8 @@ class _DetailScreen1State extends State<DetailScreen1> {
   late bool _isAudioLoaded;
 
   late double _arrfontSize;
+  bool _latinCheck = true;
+  bool _terjemahCheck = true;
 
   @override
   void initState() {
@@ -157,7 +159,10 @@ class _DetailScreen1State extends State<DetailScreen1> {
                 children: [
                   _buildArabicText(ayat),
                   const SizedBox(height: 15),
-                  _buildTranslationText(ayat),
+                  _latinCheck ? _buildLatinText(ayat) : const SizedBox.shrink(),
+                  _terjemahCheck
+                      ? _buildTerjemahText(ayat)
+                      : const SizedBox.shrink(),
                 ],
               ),
             ),
@@ -214,15 +219,33 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
-  Widget _buildTranslationText(Ayat ayat) {
+  Widget _buildLatinText(Ayat ayat) {
     return Container(
+      margin: EdgeInsets.only(top: 10),
       alignment: Alignment.topLeft,
       child: Text(
         ayat.tr.toString(),
         style: GoogleFonts.amiri(
-          color: Colors.black,
+          color: Colors.black.withOpacity(0.8),
           fontWeight: FontWeight.w300,
           fontSize: 14,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTerjemahText(Ayat ayat) {
+    return Container(
+      margin: EdgeInsets.only(top: 10),
+      alignment: Alignment.topLeft,
+      child: Text(
+        ayat.idn.toString(),
+        textAlign: TextAlign.justify,
+        style: GoogleFonts.poppins(
+          color: Colors.black,
+          fontWeight: FontWeight.w400,
+          fontSize: 11,
         ),
       ),
     );
@@ -452,6 +475,18 @@ class _DetailScreen1State extends State<DetailScreen1> {
     });
   }
 
+  void _updateLatinCheck(bool value) {
+    setState(() {
+      _latinCheck = value;
+    });
+  }
+
+  void _updateTerjemahCheck(bool value) {
+    setState(() {
+      _terjemahCheck = value;
+    });
+  }
+
   void _showSettingDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -459,13 +494,13 @@ class _DetailScreen1State extends State<DetailScreen1> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return Container(
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Font Size: ${_arrfontSize.toInt()}"),
-                  SizedBox(height: 16.0),
+                  const SizedBox(height: 16.0),
                   Row(
                     children: [
                       const Icon(
@@ -488,6 +523,34 @@ class _DetailScreen1State extends State<DetailScreen1> {
                       const Icon(
                         Icons.format_size,
                         size: 25, // Ukuran ikon besar
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+                  // Text("Checkbox List"),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CheckboxListTile(
+                          title: const Text('Latin'),
+                          value: _latinCheck,
+                          onChanged: (newValue) {
+                            setState(() {
+                              _updateLatinCheck(newValue!);
+                            });
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: CheckboxListTile(
+                          title: const Text('Terjemah'),
+                          value: _terjemahCheck,
+                          onChanged: (newValue) {
+                            setState(() {
+                              _updateTerjemahCheck(newValue!);
+                            });
+                          },
+                        ),
                       ),
                     ],
                   ),
