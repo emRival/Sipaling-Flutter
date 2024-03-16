@@ -25,7 +25,11 @@ class DetailScreen1 extends StatefulWidget {
 class _DetailScreen1State extends State<DetailScreen1> {
   late Future<AyahModel> _ayahModelFuture;
   late final AudioPlayer _player;
+  late final AudioPlayer _player2;
   late bool _isAudioLoaded;
+  late bool _isAudioLoaded2;
+
+  late String _selectedAudioSource;
 
   late double _arrfontSize;
   bool _latinCheck = true;
@@ -35,14 +39,18 @@ class _DetailScreen1State extends State<DetailScreen1> {
   void initState() {
     super.initState();
     _arrfontSize = 20.0;
+    _selectedAudioSource = "01";
     _loadData(); // Panggil _loadData() di sini
     _player = AudioPlayer();
+    _player2 = AudioPlayer();
     _isAudioLoaded = false;
+    _isAudioLoaded2 = false;
   }
 
   @override
   void dispose() {
     _player.dispose();
+    _player2.dispose();
     super.dispose();
   }
 
@@ -101,13 +109,35 @@ class _DetailScreen1State extends State<DetailScreen1> {
           return DetailScreenRetry(onRetry: _loadData);
         } else if (snapshot.hasData) {
           final ayahModel = snapshot.data!;
-          final link = ayahModel.audio.toString();
+          String? link;
+          switch (_selectedAudioSource) {
+            case '01':
+              link = ayahModel.audioFull?.s01?.toString();
+              break;
+            case '02':
+              link = ayahModel.audioFull?.s02?.toString();
+              break;
+            case '03':
+              link = ayahModel.audioFull?.s03?.toString();
+              break;
+            case '04':
+              link = ayahModel.audioFull?.s04?.toString();
+              break;
+            case '05':
+              link = ayahModel.audioFull?.s05?.toString();
+              break;
+            // Add cases for other audio sources as needed
+            default:
+              // Handle the default case, maybe set link to a default value or show an error message
+              break;
+          }
+          //tes
 
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: _banner(ayat: ayahModel, link: link),
+                child: _banner(ayat: ayahModel, link: link!),
               ),
               Expanded(
                 child: ListView.separated(
@@ -138,13 +168,13 @@ class _DetailScreen1State extends State<DetailScreen1> {
     required AyahModel surah,
   }) {
     final bookmarksBox = Hive.box('bookmarks_quran');
-    final String bookmarkKey = '${ayat.surah}_${ayat.nomor}';
+    final String bookmarkKey = '${surah.nomor}_${ayat.nomorAyat}';
     final bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
 
     return InkWell(
       onLongPress: () {
         _showLongPressOptionsDialog(
-            context, surah, ayat.nomor!, ayat, bookmarkExists, bookmarkKey);
+            context, surah, ayat.nomorAyat!, ayat, bookmarkExists, bookmarkKey);
       },
       child: Container(
         color: _getColorForLastReadItem(ayat, surah),
@@ -177,7 +207,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
     final int? lastReadSurahId = lastReadBox.get('last_read')?['id'];
     final int? lastReadAyatNumber = lastReadBox.get('last_read')?['nomor_ayat'];
     final bool isLastRead =
-        lastReadSurahId == surah.nomor && lastReadAyatNumber == ayat.nomor;
+        lastReadSurahId == surah.nomor && lastReadAyatNumber == ayat.nomorAyat;
 
     return isLastRead ? Colors.yellow : Colors.transparent;
   }
@@ -194,7 +224,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
           width: 36,
           child: Center(
             child: Text(
-              ayat.nomor.toString(),
+              ayat.nomorAyat.toString(),
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
@@ -208,7 +238,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
 
   Widget _buildArabicText(Ayat ayat) {
     return Text(
-      ayat.ar.toString(),
+      ayat.teksArab.toString(),
       style: GoogleFonts.amiriQuran(
         color: Colors.black,
         fontWeight: FontWeight.w500,
@@ -224,7 +254,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
       margin: EdgeInsets.only(top: 10),
       alignment: Alignment.topLeft,
       child: Text(
-        ayat.tr.toString(),
+        ayat.teksLatin.toString(),
         style: GoogleFonts.amiri(
           color: Colors.black.withOpacity(0.8),
           fontWeight: FontWeight.w300,
@@ -240,7 +270,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
       margin: EdgeInsets.only(top: 10),
       alignment: Alignment.topLeft,
       child: Text(
-        ayat.idn.toString(),
+        ayat.teksIndonesia.toString(),
         textAlign: TextAlign.justify,
         style: GoogleFonts.poppins(
           color: Colors.black,
@@ -297,17 +327,17 @@ class _DetailScreen1State extends State<DetailScreen1> {
                           backgroundColor: Colors.red,
                         ),
                       );
-
-                      if (_player.playing) {
-                        _player.pause();
-                      } else {
-                        _player.play();
-                      }
                       return;
                     }
 
+                  
+                      if (_player2.playing) {
+                        _player2.pause();
+                      }
+
+                    // Jika audio belum dimuat, muat audio dan set _isAudioLoaded menjadi true
                     if (!_isAudioLoaded) {
-                      await _setupAudioPlayer(link: link);
+                      await _setupAudioPlayer(player: _player, link: link);
                       _isAudioLoaded = true;
                     }
 
@@ -338,6 +368,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
                         return const Icon(Icons.pause,
                             size: 30, color: Colors.white);
                       } else {
+                        _isAudioLoaded = false;
                         return const Icon(Icons.replay,
                             size: 30, color: Colors.white);
                       }
@@ -390,13 +421,14 @@ class _DetailScreen1State extends State<DetailScreen1> {
         ],
       );
 
-  Future<void> _setupAudioPlayer({required String link}) async {
-    _player.playbackEventStream.listen((event) {},
+  Future<void> _setupAudioPlayer(
+      {required AudioPlayer player, required String link}) async {
+    player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stacktrace) {
       print("A Stream Error Occurred: $e");
     });
     try {
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(link)));
+      await player.setAudioSource(AudioSource.uri(Uri.parse(link)));
     } catch (e) {
       print("Error Loading Audio Source: $e");
     }
@@ -407,16 +439,17 @@ class _DetailScreen1State extends State<DetailScreen1> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return Wrap(
-          children: <Widget>[
+        late String linkAudio;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
             ListTile(
               leading: const Icon(Icons.book),
               title: const Text('Save Last Read'),
               onTap: () {
-                // Tindakan ketika opsi "Bagikan" dipilih
                 _saveLastRead(surah, ayat);
                 Navigator.of(context).pop();
-                // Lakukan sesuatu...
               },
             ),
             ListTile(
@@ -435,7 +468,89 @@ class _DetailScreen1State extends State<DetailScreen1> {
                       saveBookmark(context, ayah, surah);
                       Navigator.of(context).pop();
                     },
-            )
+            ),
+            Row(
+              children: [
+                const SizedBox(width: 6),
+                IconButton(
+                  onPressed: () async {
+                    setState(() {
+                      linkAudio = ayah.audio!.s01.toString();
+                    });
+                    var connectivityResult =
+                        await Connectivity().checkConnectivity();
+
+                    if (connectivityResult == ConnectivityResult.none) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tidak ada koneksi internet.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                 
+                      if (_player.playing) {
+                        _player.pause();
+                      } 
+
+                    if (!_isAudioLoaded2) {
+                      await _setupAudioPlayer(
+                          player: _player2, link: linkAudio);
+                      _isAudioLoaded2 = true;
+                    }
+
+                    if (_player2.playing) {
+                      _player2.pause();
+                    } else {
+                      _player2.play();
+                    }
+                  },
+                  icon: StreamBuilder<PlayerState>(
+                    stream: _player2.playerStateStream,
+                    builder: (context, snapshot) {
+                      final processingState = snapshot.data?.processingState;
+                      final playing = snapshot.data?.playing;
+                      if (processingState == ProcessingState.loading ||
+                          processingState == ProcessingState.buffering) {
+                        return const SizedBox(
+                          width: 24.0,
+                          height: 24.0,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.0,
+                            color: Color.fromARGB(255, 183, 8, 171),
+                          ),
+                        );
+                      } else if (playing != true) {
+                        return const Icon(
+                          Icons.play_arrow,
+                          color: Color.fromARGB(255, 183, 8, 171),
+                        );
+                      } else if (processingState != ProcessingState.completed &&
+                          _isAudioLoaded2 == true) {
+                        return const Icon(
+                          Icons.pause,
+                          color: Color.fromARGB(255, 183, 8, 171),
+                        );
+                      } else {
+                        _isAudioLoaded2 = false;
+                        return const Icon(
+                          Icons.replay,
+                          color: Color.fromARGB(255, 183, 8, 171),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4), // Spasi antara IconButton dan Text
+                const Text(
+                  "Play Audio",
+                  style: TextStyle(fontSize: 17),
+                ),
+              ],
+            ),
           ],
         );
       },
@@ -486,6 +601,20 @@ class _DetailScreen1State extends State<DetailScreen1> {
       _terjemahCheck = value;
     });
   }
+
+  void _updateQori(String value) {
+    setState(() {
+      _selectedAudioSource = value;
+    });
+  }
+
+  Map<String, String> audioSources = {
+    "Abdullah Al-Juhany": "01",
+    "Abdul Muhsin Al-Qasim": "02",
+    "Abdurrahman as-Sudais": "03",
+    "Ibrahim Al-Dossari": "04",
+    "Misyari Rasyid Al-Afasi": "05"
+  };
 
   void _showSettingDialog(BuildContext context) {
     showModalBottomSheet(
@@ -553,6 +682,24 @@ class _DetailScreen1State extends State<DetailScreen1> {
                         ),
                       ),
                     ],
+                  ),
+                  DropdownButton<String>(
+                    value: _selectedAudioSource,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _updateQori(newValue);
+                          print(newValue);
+                        });
+                      }
+                    },
+                    items: audioSources.keys
+                        .map<DropdownMenuItem<String>>((String key) {
+                      return DropdownMenuItem<String>(
+                        value: audioSources[key],
+                        child: Text(key),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),

@@ -6,146 +6,165 @@ class AyahModel {
   String? tempatTurun;
   String? arti;
   String? deskripsi;
-  String? audio;
-  dynamic status;
+  AudioFull? audioFull;
   List<Ayat>? ayat;
   SuratSelanjutnya? suratSelanjutnya;
-  dynamic suratSebelumnya;
+  SuratSelanjutnya? suratSebelumnya;
 
-  AyahModel(
-      {this.nomor,
-      this.nama,
-      this.namaLatin,
-      this.jumlahAyat,
-      this.tempatTurun,
-      this.arti,
-      this.deskripsi,
-      this.audio,
-      this.status,
-      this.ayat,
-      this.suratSelanjutnya,
-      this.suratSebelumnya});
+  AyahModel({
+    this.nomor,
+    this.nama,
+    this.namaLatin,
+    this.jumlahAyat,
+    this.tempatTurun,
+    this.arti,
+    this.deskripsi,
+    this.audioFull,
+    this.ayat,
+    this.suratSelanjutnya,
+    this.suratSebelumnya,
+  });
 
-  AyahModel.fromJson(Map<String, dynamic> json) {
-    nomor = json['nomor'];
-    nama = json['nama'];
-    namaLatin = json['nama_latin'];
-    jumlahAyat = json['jumlah_ayat'];
-    tempatTurun = json['tempat_turun'];
-    arti = json['arti'];
-    deskripsi = json['deskripsi'];
-    audio = json['audio'];
-    status = json['status'];
-    if (json['ayat'] != null) {
+  AyahModel.fromJson(Map<String, dynamic>? json) {
+    nomor = json?['nomor'];
+    nama = json?['nama'];
+    namaLatin = json?['namaLatin'];
+    jumlahAyat = json?['jumlahAyat'];
+    tempatTurun = json?['tempatTurun'];
+    arti = json?['arti'];
+    deskripsi = json?['deskripsi'];
+    audioFull = json?['audioFull'] != null
+        ? AudioFull.fromJson(json?['audioFull'])
+        : null;
+    if (json?['ayat'] != null) {
       ayat = <Ayat>[];
-      json['ayat'].forEach((v) {
+      json?['ayat'].forEach((v) {
         ayat!.add(Ayat.fromJson(v));
       });
     }
-    suratSelanjutnya = json['surat_selanjutnya'] != null
-        ? SuratSelanjutnya.fromJson(json['surat_selanjutnya'])
+    suratSelanjutnya = json?['suratSelanjutnya'] != false
+        ? SuratSelanjutnya.fromJson(json?['suratSelanjutnya'])
         : null;
-    suratSebelumnya = json['surat_sebelumnya'];
+    suratSebelumnya = json?['suratSebelumnya'] != false
+        ? SuratSelanjutnya.fromJson(json?['suratSebelumnya'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['nomor'] = nomor;
     data['nama'] = nama;
-    data['nama_latin'] = namaLatin;
-    data['jumlah_ayat'] = jumlahAyat;
-    data['tempat_turun'] = tempatTurun;
+    data['namaLatin'] = namaLatin;
+    data['jumlahAyat'] = jumlahAyat;
+    data['tempatTurun'] = tempatTurun;
     data['arti'] = arti;
     data['deskripsi'] = deskripsi;
-    data['audio'] = audio;
-    data['status'] = status;
+    if (audioFull != null) {
+      data['audioFull'] = audioFull!.toJson();
+    }
     if (ayat != null) {
       data['ayat'] = ayat!.map((v) => v.toJson()).toList();
     }
     if (suratSelanjutnya != null) {
-      data['surat_selanjutnya'] = suratSelanjutnya!.toJson();
+      data['suratSelanjutnya'] = suratSelanjutnya!.toJson();
     }
-    data['surat_sebelumnya'] = suratSebelumnya;
+    if (suratSebelumnya != null) {
+      data['suratSebelumnya'] = suratSebelumnya!.toJson();
+    }
+    return data;
+  }
+}
+
+class AudioFull {
+  String? s01;
+  String? s02;
+  String? s03;
+  String? s04;
+  String? s05;
+
+  AudioFull({this.s01, this.s02, this.s03, this.s04, this.s05});
+
+  AudioFull.fromJson(Map<String, dynamic>? json) {
+    s01 = json?['01'];
+    s02 = json?['02'];
+    s03 = json?['03'];
+    s04 = json?['04'];
+    s05 = json?['05'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['01'] = s01;
+    data['02'] = s02;
+    data['03'] = s03;
+    data['04'] = s04;
+    data['05'] = s05;
     return data;
   }
 }
 
 class Ayat {
-  int? id;
-  int? surah;
-  int? nomor;
-  String? ar;
-  String? tr;
-  String? idn;
+  int? nomorAyat;
+  String? teksArab;
+  String? teksLatin;
+  String? teksIndonesia;
+  AudioFull? audio;
 
-  Ayat({this.id, this.surah, this.nomor, this.ar, this.tr, this.idn});
+  Ayat({
+    this.nomorAyat,
+    this.teksArab,
+    this.teksLatin,
+    this.teksIndonesia,
+    this.audio,
+  });
 
   Ayat.fromJson(Map<String, dynamic>? json) {
-    id = json?['id'];
-    surah = json?['surah'];
-    nomor = json?['nomor'];
-    ar = json?['ar'];
-    tr = json?['tr'];
-    idn = json?['idn'];
+    nomorAyat = json?['nomorAyat'];
+    teksArab = json?['teksArab'];
+    teksLatin = json?['teksLatin'];
+    teksIndonesia = json?['teksIndonesia'];
+    audio = json?['audio'] != null ? AudioFull.fromJson(json?['audio']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
-    data['surah'] = surah;
-    data['nomor'] = nomor;
-    data['ar'] = ar;
-    data['tr'] = tr;
-    data['idn'] = idn;
+    data['nomorAyat'] = nomorAyat;
+    data['teksArab'] = teksArab;
+    data['teksLatin'] = teksLatin;
+    data['teksIndonesia'] = teksIndonesia;
+    if (audio != null) {
+      data['audio'] = audio!.toJson();
+    }
     return data;
   }
 }
 
 class SuratSelanjutnya {
-  int? id;
   int? nomor;
   String? nama;
   String? namaLatin;
   int? jumlahAyat;
-  String? tempatTurun;
-  String? arti;
-  String? deskripsi;
-  String? audio;
 
-  SuratSelanjutnya(
-      {this.id,
-      this.nomor,
-      this.nama,
-      this.namaLatin,
-      this.jumlahAyat,
-      this.tempatTurun,
-      this.arti,
-      this.deskripsi,
-      this.audio});
+  SuratSelanjutnya({
+    this.nomor,
+    this.nama,
+    this.namaLatin,
+    this.jumlahAyat,
+  });
 
   SuratSelanjutnya.fromJson(Map<String, dynamic>? json) {
-    id = json?['id'];
     nomor = json?['nomor'];
     nama = json?['nama'];
-    namaLatin = json?['nama_latin'];
-    jumlahAyat = json?['jumlah_ayat'];
-    tempatTurun = json?['tempat_turun'];
-    arti = json?['arti'];
-    deskripsi = json?['deskripsi'];
-    audio = json?['audio'];
+    namaLatin = json?['namaLatin'];
+    jumlahAyat = json?['jumlahAyat'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
     data['nomor'] = nomor;
     data['nama'] = nama;
-    data['nama_latin'] = namaLatin;
-    data['jumlah_ayat'] = jumlahAyat;
-    data['tempat_turun'] = tempatTurun;
-    data['arti'] = arti;
-    data['deskripsi'] = deskripsi;
-    data['audio'] = audio;
+    data['namaLatin'] = namaLatin;
+    data['jumlahAyat'] = jumlahAyat;
     return data;
   }
 }

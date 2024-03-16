@@ -16,7 +16,7 @@ void deleteBookmark(BuildContext context, String bookmarkKey) {
 void saveBookmark(BuildContext context, Ayat ayat, AyahModel surah) {
     final bookmarksBox = Hive.box('bookmarks_quran');
     final String bookmarkKey =
-        '${ayat.surah}_${ayat.nomor}'; // Kombinasi surat dan nomor ayat sebagai kunci
+        '${surah.nomor}_${ayat.nomorAyat}'; // Kombinasi surat dan nomor ayat sebagai kunci
 
     // Check if the bookmark already exists
     bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
@@ -34,9 +34,9 @@ void saveBookmark(BuildContext context, Ayat ayat, AyahModel surah) {
       final Map<String, dynamic> bookmarkData = {
         'id': surah.nomor,
         'nama_surat': surah.namaLatin,
-        'arti': ayat.idn,
-        'nomor_ayat': ayat.nomor,
-        'arab': ayat.ar
+        'arti': ayat.teksIndonesia,
+        'nomor_ayat': ayat.nomorAyat,
+        'arab': ayat.teksArab
       };
 
       // Simpan bookmark ke dalam database
