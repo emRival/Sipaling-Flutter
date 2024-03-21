@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:quran_app/pages/bookmark/bookmark_util.dart';
+import 'package:quran_app/pages/ui/bookmark/bookmark_util.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';

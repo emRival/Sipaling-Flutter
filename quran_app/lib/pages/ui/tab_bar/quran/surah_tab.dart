@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_app/model/surah_model.dart';
-import 'package:quran_app/pages/detail_screen.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/detail_screen.dart';
 
 import 'package:quran_app/viewmodel/surah_viewmodel.dart';
 

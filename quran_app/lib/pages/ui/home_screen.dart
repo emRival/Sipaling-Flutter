@@ -4,11 +4,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:quran_app/component/tab_item.dart';
-import 'package:quran_app/pages/bookmark/bookmark_page.dart';
-import 'package:quran_app/pages/quran/quran_page.dart';
-import 'package:quran_app/pages/quran/tabs/doa_tab.dart';
-import 'package:quran_app/pages/quran/tabs/dzikr_tab.dart';
-import 'package:quran_app/pages/quran/tabs/surah_tab.dart';
+import 'package:quran_app/pages/ui/bookmark/bookmark_page.dart';
+import 'package:quran_app/pages/ui/main_page.dart';
+import 'package:quran_app/pages/ui/tab_bar/doa_tab.dart';
+import 'package:quran_app/pages/ui/tab_bar/dzikr_tab.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/surah_tab.dart';
 import 'package:quran_app/theme.dart';
 
 class HomeScreen extends StatefulWidget {

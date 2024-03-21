@@ -3,10 +3,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:quran_app/component/tab_item.dart';
-import 'package:quran_app/pages/detail_screen.dart';
-import 'package:quran_app/pages/quran/tabs/doa_tab.dart';
-import 'package:quran_app/pages/quran/tabs/dzikr_tab.dart';
-import 'package:quran_app/pages/quran/tabs/surah_tab.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/detail_screen.dart';
+import 'package:quran_app/pages/ui/tab_bar/doa_tab.dart';
+import 'package:quran_app/pages/ui/tab_bar/dzikr_tab.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/surah_tab.dart';
 import 'package:quran_app/theme.dart';
 
 class QuranPage extends StatefulWidget {

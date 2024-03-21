@@ -4,9 +4,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
 import 'package:quran_app/model/ayah_model.dart';
-import 'package:quran_app/pages/DetailScreenRetry.dart';
-import 'package:quran_app/pages/bookmark/bookmark_util.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/DetailScreenRetry.dart';
+import 'package:quran_app/pages/ui/bookmark/bookmark_util.dart';
+import 'package:quran_app/provider/quran_provider.dart';
 
 import 'package:quran_app/viewmodel/ayah_viewmodel.dart';
 
@@ -23,7 +25,7 @@ class DetailScreen1 extends StatefulWidget {
 }
 
 class _DetailScreen1State extends State<DetailScreen1> {
-  late Future<AyahModel> _ayahModelFuture;
+  // late Future<AyahModel> _ayahModelFuture;
   late final AudioPlayer _player;
   late final AudioPlayer _player2;
   late bool _isAudioLoaded;
@@ -40,7 +42,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
     super.initState();
     _arrfontSize = 20.0;
     _selectedAudioSource = "01";
-    _loadData(); // Panggil _loadData() di sini
+    // _loadData(); // Panggil _loadData() di sini
     _player = AudioPlayer();
     _player2 = AudioPlayer();
     _isAudioLoaded = false;
@@ -54,30 +56,26 @@ class _DetailScreen1State extends State<DetailScreen1> {
     super.dispose();
   }
 
-  void _loadData() {
-    setState(() {
-      _ayahModelFuture = AyahViewModel().getListAyah(widget.id_surah);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _appBar(),
-      body: SafeArea(child: _buildBody()),
+    return ChangeNotifierProvider<QuranProvider>(
+      create: (_) => QuranProvider(id_surah: widget.id_surah),
+      child: Scaffold(
+        appBar: _appBar(),
+        body: SafeArea(child: _buildBody()),
+      ),
     );
   }
 
   AppBar _appBar() => AppBar(
         elevation: 0,
-        title: FutureBuilder(
-          future: _ayahModelFuture,
-          builder: (context, AsyncSnapshot<AyahModel> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        title: Consumer<QuranProvider>(
+          builder: (context, state, _) {
+            if (state.connectionState == ConnectionState.waiting) {
               return const Icon(Icons
                   .all_inclusive_rounded); // Placeholder text ketika data masih dimuat
-            } else if (snapshot.hasData) {
-              final ayahModel = snapshot.data!;
+            } else if (state.state == ResultState.hasData) {
+              final ayahModel = state.result!;
               return Text(
                 ayahModel.nama.toString(),
                 style: GoogleFonts.amiriQuran(),
@@ -100,58 +98,23 @@ class _DetailScreen1State extends State<DetailScreen1> {
       );
 
   Widget _buildBody() {
-    return FutureBuilder(
-      future: _ayahModelFuture,
-      builder: (context, AsyncSnapshot<AyahModel> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return Consumer<QuranProvider>(
+      builder: (context, state, _) {
+        if (state.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return DetailScreenRetry(onRetry: _loadData);
-        } else if (snapshot.hasData) {
-          final ayahModel = snapshot.data!;
-          String? link;
-          switch (_selectedAudioSource) {
-            case '01':
-              link = ayahModel.audioFull?.s01?.toString();
-              break;
-            case '02':
-              link = ayahModel.audioFull?.s02?.toString();
-              break;
-            case '03':
-              link = ayahModel.audioFull?.s03?.toString();
-              break;
-            case '04':
-              link = ayahModel.audioFull?.s04?.toString();
-              break;
-            case '05':
-              link = ayahModel.audioFull?.s05?.toString();
-              break;
-            // Add cases for other audio sources as needed
-            default:
-              // Handle the default case, maybe set link to a default value or show an error message
-              break;
-          }
-          //tes
+        } else if (state.state == ResultState.error) {
+          return DetailScreenRetry(onRetry: state.onRetry);
+        } else if (state.state == ResultState.hasData) {
+    
 
           return Column(
             children: [
               Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: _banner(ayat: ayahModel, link: link!),
+                child: _banner(),
               ),
               Expanded(
-                child: ListView.separated(
-                  itemBuilder: (context, index) => _itemList(
-                    context: context,
-                    ayat: ayahModel.ayat![index],
-                    surah: snapshot.data!,
-                  ),
-                  separatorBuilder: (context, index) => Divider(
-                    color: Colors.grey.withOpacity(0.1),
-                    height: 1,
-                  ),
-                  itemCount: ayahModel.ayat!.length,
-                ),
+                child: _buildListView(),
               ),
             ],
           );
@@ -162,45 +125,188 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
-  Widget _itemList({
-    required BuildContext context,
-    required Ayat ayat,
-    required AyahModel surah,
-  }) {
-    final bookmarksBox = Hive.box('bookmarks_quran');
-    final String bookmarkKey = '${surah.nomor}_${ayat.nomorAyat}';
-    final bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
+  Widget _buildListView() {
+    return Consumer<QuranProvider>(
+      builder: (context, state, _) => ListView.separated(
+        itemBuilder: (context, index) {
+          final ayahModel = state.result;
+          final bookmarksBox = Hive.box('bookmarks_quran');
+          final String bookmarkKey =
+              '${ayahModel.nomor}_${state.ayat?[index].nomorAyat}';
+          final bool bookmarkExists = bookmarksBox.containsKey(bookmarkKey);
 
-    return InkWell(
-      onLongPress: () {
-        _showLongPressOptionsDialog(
-            context, surah, ayat.nomorAyat!, ayat, bookmarkExists, bookmarkKey);
-      },
-      child: Container(
-        color: _getColorForLastReadItem(ayat, surah),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            _buildNumberIcon(bookmarkExists, ayat),
-            const SizedBox(width: 15),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+          return InkWell(
+            onLongPress: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (BuildContext context) {
+                  late String linkAudio;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.book),
+                        title: const Text('Save Last Read'),
+                        onTap: () {
+                          _saveLastRead(ayahModel,
+                              ayahModel.ayat![index].nomorAyat!);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      ListTile(
+                        leading: bookmarkExists
+                            ? const Icon(Icons.bookmark_remove)
+                            : const Icon(Icons.bookmark_add),
+                        title: bookmarkExists
+                            ? const Text('Delete Bookmark')
+                            : const Text('Save Bookmark'),
+                        onTap: bookmarkExists
+                            ? () {
+                                deleteBookmark(context, bookmarkKey);
+                                Navigator.of(context).pop();
+                              }
+                            : () {
+                                saveBookmark(
+                                    context, state.ayat![index], ayahModel);
+                                Navigator.of(context).pop();
+                              },
+                      ),
+                      Row(
+                        children: [
+                          const SizedBox(width: 6),
+                          IconButton(
+                            onPressed: () async {
+                              linkAudio = state.getAudioAyatLink(
+                                  _selectedAudioSource, state.ayat![index])!;
+
+                              if (state.connectionState ==
+                                  ConnectivityResult.none) {
+                                ScaffoldMessenger.of(context)
+                                    .hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Tidak ada koneksi internet.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (_player.playing) {
+                                _player.pause();
+                              }
+
+                              if (!_isAudioLoaded2) {
+                                state.setupAudioPlayer(
+                                    player: _player2, link: linkAudio!);
+
+                                _isAudioLoaded2 = true;
+                              }
+
+                              if (_player2.playing) {
+                                _player2.pause();
+                              } else {
+                                _player2.play();
+                              }
+                            },
+                            icon: StreamBuilder<PlayerState>(
+                              stream: _player2.playerStateStream,
+                              builder: (context, snapshot) {
+                                final processingState =
+                                    snapshot.data?.processingState;
+                                final playing = snapshot.data?.playing;
+                                if (processingState ==
+                                        ProcessingState.loading ||
+                                    processingState ==
+                                        ProcessingState.buffering) {
+                                  return const SizedBox(
+                                    width: 24.0,
+                                    height: 24.0,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.0,
+                                      color: Color.fromARGB(255, 183, 8, 171),
+                                    ),
+                                  );
+                                } else if (playing != true) {
+                                  return const Icon(
+                                    Icons.play_arrow,
+                                    color: Color.fromARGB(255, 183, 8, 171),
+                                  );
+                                } else if (processingState !=
+                                        ProcessingState.completed &&
+                                    _isAudioLoaded2 == true) {
+                                  return const Icon(
+                                    Icons.pause,
+                                    color: Color.fromARGB(255, 183, 8, 171),
+                                  );
+                                } else {
+                                  _isAudioLoaded2 = false;
+                                  return const Icon(
+                                    Icons.replay,
+                                    color: Color.fromARGB(255, 183, 8, 171),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(
+                              width: 4), // Spasi antara IconButton dan Text
+                          const Text(
+                            "Play Audio",
+                            style: TextStyle(fontSize: 17),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            child: Container(
+              color: _getColorForLastReadItem(state.ayat![index], ayahModel),
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  _buildArabicText(ayat),
-                  const SizedBox(height: 15),
-                  _latinCheck ? _buildLatinText(ayat) : const SizedBox.shrink(),
-                  _terjemahCheck
-                      ? _buildTerjemahText(ayat)
-                      : const SizedBox.shrink(),
+                  _buildNumberIcon(bookmarkExists, state.ayat![index]),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildArabicText(state.ayat![index]),
+                        const SizedBox(height: 15),
+                        _latinCheck
+                            ? _buildLatinText(state.ayat![index])
+                            : const SizedBox.shrink(),
+                        _terjemahCheck
+                            ? _buildTerjemahText(state.ayat![index])
+                            : const SizedBox.shrink(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
+          );
+        },
+        separatorBuilder: (context, index) => Divider(
+          color: Colors.grey.withOpacity(0.1),
+          height: 1,
         ),
+        itemCount: state.ayat!.length,
       ),
     );
   }
+
+  // Widget _itemList({
+  //   required BuildContext context,
+  //   required Ayat ayat,
+  //   required AyahModel surah,
+  // }) {
+  // }
 
   Color _getColorForLastReadItem(Ayat ayat, AyahModel surah) {
     final lastReadBox = Hive.box('last_read_quran');
@@ -281,7 +387,11 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
-  Stack _banner({required AyahModel ayat, required String link}) => Stack(
+ Widget _banner() {
+    return Consumer<QuranProvider>(builder: (context, state, _) {
+      final ayat = state.result;
+      final String? link = state.getAudioFullLink(_selectedAudioSource);
+      return Stack(
         children: [
           Container(
             height: 140,
@@ -315,10 +425,10 @@ class _DetailScreen1State extends State<DetailScreen1> {
                 ),
                 child: IconButton(
                   onPressed: () async {
-                    var connectivityResult =
-                        await Connectivity().checkConnectivity();
+                    // var connectivityResult =
+                    //     await Connectivity().checkConnectivity();
 
-                    if (connectivityResult == ConnectivityResult.none) {
+                    if (state.connectionState == ConnectivityResult.none) {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       // Tampilkan Snackbar jika tidak ada koneksi internet
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -330,14 +440,13 @@ class _DetailScreen1State extends State<DetailScreen1> {
                       return;
                     }
 
-                  
-                      if (_player2.playing) {
-                        _player2.pause();
-                      }
+                    if (_player2.playing) {
+                      _player2.pause();
+                    }
 
                     // Jika audio belum dimuat, muat audio dan set _isAudioLoaded menjadi true
                     if (!_isAudioLoaded) {
-                      await _setupAudioPlayer(player: _player, link: link);
+                      state.setupAudioPlayer(player: _player, link: link!);
                       _isAudioLoaded = true;
                     }
 
@@ -420,142 +529,9 @@ class _DetailScreen1State extends State<DetailScreen1> {
           ),
         ],
       );
-
-  Future<void> _setupAudioPlayer(
-      {required AudioPlayer player, required String link}) async {
-    player.playbackEventStream.listen((event) {},
-        onError: (Object e, StackTrace stacktrace) {
-      print("A Stream Error Occurred: $e");
     });
-    try {
-      await player.setAudioSource(AudioSource.uri(Uri.parse(link)));
-    } catch (e) {
-      print("Error Loading Audio Source: $e");
-    }
   }
 
-  void _showLongPressOptionsDialog(BuildContext context, AyahModel surah,
-      int ayat, Ayat ayah, bool bookmarkCheck, String bookmarkKey) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        late String linkAudio;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.book),
-              title: const Text('Save Last Read'),
-              onTap: () {
-                _saveLastRead(surah, ayat);
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: bookmarkCheck
-                  ? const Icon(Icons.bookmark_remove)
-                  : const Icon(Icons.bookmark_add),
-              title: bookmarkCheck
-                  ? const Text('Delete Bookmark')
-                  : const Text('Save Bookmark'),
-              onTap: bookmarkCheck
-                  ? () {
-                      deleteBookmark(context, bookmarkKey);
-                      Navigator.of(context).pop();
-                    }
-                  : () {
-                      saveBookmark(context, ayah, surah);
-                      Navigator.of(context).pop();
-                    },
-            ),
-            Row(
-              children: [
-                const SizedBox(width: 6),
-                IconButton(
-                  onPressed: () async {
-                    setState(() {
-                      linkAudio = ayah.audio!.s01.toString();
-                    });
-                    var connectivityResult =
-                        await Connectivity().checkConnectivity();
-
-                    if (connectivityResult == ConnectivityResult.none) {
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tidak ada koneksi internet.'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                 
-                      if (_player.playing) {
-                        _player.pause();
-                      } 
-
-                    if (!_isAudioLoaded2) {
-                      await _setupAudioPlayer(
-                          player: _player2, link: linkAudio);
-                      _isAudioLoaded2 = true;
-                    }
-
-                    if (_player2.playing) {
-                      _player2.pause();
-                    } else {
-                      _player2.play();
-                    }
-                  },
-                  icon: StreamBuilder<PlayerState>(
-                    stream: _player2.playerStateStream,
-                    builder: (context, snapshot) {
-                      final processingState = snapshot.data?.processingState;
-                      final playing = snapshot.data?.playing;
-                      if (processingState == ProcessingState.loading ||
-                          processingState == ProcessingState.buffering) {
-                        return const SizedBox(
-                          width: 24.0,
-                          height: 24.0,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.0,
-                            color: Color.fromARGB(255, 183, 8, 171),
-                          ),
-                        );
-                      } else if (playing != true) {
-                        return const Icon(
-                          Icons.play_arrow,
-                          color: Color.fromARGB(255, 183, 8, 171),
-                        );
-                      } else if (processingState != ProcessingState.completed &&
-                          _isAudioLoaded2 == true) {
-                        return const Icon(
-                          Icons.pause,
-                          color: Color.fromARGB(255, 183, 8, 171),
-                        );
-                      } else {
-                        _isAudioLoaded2 = false;
-                        return const Icon(
-                          Icons.replay,
-                          color: Color.fromARGB(255, 183, 8, 171),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 4), // Spasi antara IconButton dan Text
-                const Text(
-                  "Play Audio",
-                  style: TextStyle(fontSize: 17),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _saveLastRead(AyahModel surah, int ayat) {
     final lastReadBox = Hive.box('last_read_quran');

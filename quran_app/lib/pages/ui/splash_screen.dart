@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:quran_app/pages/home_screen.dart';
+import 'package:quran_app/pages/ui/home_screen.dart';
 import 'package:quran_app/theme.dart';
 
 class SplashScreen extends StatelessWidget {

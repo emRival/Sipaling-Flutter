@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:quran_app/pages/detail_screen.dart';
-import 'package:quran_app/pages/home_screen.dart';
-import 'package:quran_app/pages/splash_screen.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/detail_screen.dart';
+import 'package:quran_app/pages/ui/home_screen.dart';
+import 'package:quran_app/pages/ui/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
