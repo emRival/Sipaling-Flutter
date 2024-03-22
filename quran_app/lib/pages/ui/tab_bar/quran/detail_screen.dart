@@ -8,9 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:quran_app/model/ayah_model.dart';
 import 'package:quran_app/pages/ui/tab_bar/quran/DetailScreenRetry.dart';
 import 'package:quran_app/pages/ui/bookmark/bookmark_util.dart';
+import 'package:quran_app/pages/ui/tab_bar/quran/save_last_read.dart';
 import 'package:quran_app/provider/quran_provider.dart';
-
-import 'package:quran_app/viewmodel/ayah_viewmodel.dart';
 
 class DetailScreen1 extends StatefulWidget {
   static const routeName = 'detail_screen';
@@ -25,23 +24,16 @@ class DetailScreen1 extends StatefulWidget {
 }
 
 class _DetailScreen1State extends State<DetailScreen1> {
-  // late Future<AyahModel> _ayahModelFuture;
   late final AudioPlayer _player;
   late final AudioPlayer _player2;
   late bool _isAudioLoaded;
   late bool _isAudioLoaded2;
 
-  late String _selectedAudioSource;
-
-  late double _arrfontSize;
-  bool _latinCheck = true;
-  bool _terjemahCheck = true;
-
   @override
   void initState() {
     super.initState();
-    _arrfontSize = 20.0;
-    _selectedAudioSource = "01";
+    // _arrfontSize = 20.0;
+    // _selectedAudioSource = "01";
     // _loadData(); // Panggil _loadData() di sini
     _player = AudioPlayer();
     _player2 = AudioPlayer();
@@ -72,30 +64,130 @@ class _DetailScreen1State extends State<DetailScreen1> {
         title: Consumer<QuranProvider>(
           builder: (context, state, _) {
             if (state.connectionState == ConnectionState.waiting) {
-              return const Icon(Icons
-                  .all_inclusive_rounded); // Placeholder text ketika data masih dimuat
+              return const Icon(Icons.all_inclusive_rounded);
             } else if (state.state == ResultState.hasData) {
-              final ayahModel = state.result!;
+              final ayahModel = state.result;
               return Text(
                 ayahModel.nama.toString(),
                 style: GoogleFonts.amiriQuran(),
-              ); // Tampilkan namaLatin pada AppBar
+              );
             } else {
-              return const Text(
-                  'Detail Screen'); // Default text jika tidak ada data
+              return const Text('Detail Screen');
             }
           },
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            onPressed: () {
-              _showSettingDialog(context);
-            },
-            icon: const Icon(Icons.settings, color: Colors.grey),
-          ),
+          setting(),
         ],
       );
+
+  Widget setting() {
+    return Consumer<QuranProvider>(
+      builder: (context, state, _) {
+        return IconButton(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return StatefulBuilder(
+                  builder: (BuildContext context, StateSetter setState) {
+                    return Container(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Font Size: ${state.arabicFontSize.toInt()}"),
+                          const SizedBox(height: 16.0),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.format_size,
+                                size: 18,
+                              ),
+                              Expanded(
+                                child: Slider(
+                                  value: state.arabicFontSize,
+                                  min: 16.0,
+                                  max: 30.0,
+                                  divisions: 100,
+                                  onChanged: (double value) {
+                                    setState(() {
+                                      state.setArabicFontSize(value);
+
+                                    });
+                                  },
+                                ),
+                              ),
+                              const Icon(
+                                Icons.format_size,
+                                size: 25,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16.0),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CheckboxListTile(
+                                  title: const Text('Latin'),
+                                  value: state.latinCheck,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      state.updateLatinCheck(newValue!);
+
+                                    });
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: CheckboxListTile(
+                                  title: const Text('Terjemah'),
+                                  value: state.terjemahCheck,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      state.updateTerjemahCheck(newValue!);
+
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          DropdownButton<String>(
+                            value: state.audioSources,
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  state.updateSelectedAudio(newValue);
+
+                                });
+                              }
+                            },
+                            items: state.audioListSources.keys
+                                .map<DropdownMenuItem<String>>((String key) {
+                              return DropdownMenuItem<String>(
+                                value: state.audioListSources[key],
+                                child: Text(key),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+          icon: const Icon(Icons.settings, color: Colors.grey),
+        );
+      },
+    );
+  }
+
+
 
   Widget _buildBody() {
     return Consumer<QuranProvider>(
@@ -105,8 +197,6 @@ class _DetailScreen1State extends State<DetailScreen1> {
         } else if (state.state == ResultState.error) {
           return DetailScreenRetry(onRetry: state.onRetry);
         } else if (state.state == ResultState.hasData) {
-    
-
           return Column(
             children: [
               Padding(
@@ -150,8 +240,8 @@ class _DetailScreen1State extends State<DetailScreen1> {
                         leading: const Icon(Icons.book),
                         title: const Text('Save Last Read'),
                         onTap: () {
-                          _saveLastRead(ayahModel,
-                              ayahModel.ayat![index].nomorAyat!);
+                          saveLastRead(
+                              ayahModel, ayahModel.ayat![index].nomorAyat!);
                           Navigator.of(context).pop();
                         },
                       ),
@@ -178,8 +268,8 @@ class _DetailScreen1State extends State<DetailScreen1> {
                           const SizedBox(width: 6),
                           IconButton(
                             onPressed: () async {
-                              linkAudio = state.getAudioAyatLink(
-                                  _selectedAudioSource, state.ayat![index])!;
+                              linkAudio =
+                                  state.getAudioAyatLink(state.ayat![index])!;
 
                               if (state.connectionState ==
                                   ConnectivityResult.none) {
@@ -201,7 +291,7 @@ class _DetailScreen1State extends State<DetailScreen1> {
 
                               if (!_isAudioLoaded2) {
                                 state.setupAudioPlayer(
-                                    player: _player2, link: linkAudio!);
+                                    player: _player2, link: linkAudio);
 
                                 _isAudioLoaded2 = true;
                               }
@@ -276,12 +366,22 @@ class _DetailScreen1State extends State<DetailScreen1> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        _buildArabicText(state.ayat![index]),
+                        Text(
+                          state.ayat![index].teksArab.toString(),
+                          style: GoogleFonts.amiriQuran(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: state.arabicFontSize.toDouble(),
+                            height: 2.5,
+                          ),
+                          textAlign: TextAlign.end,
+                        ),
+                        // _buildArabicText(state.ayat![index]),
                         const SizedBox(height: 15),
-                        _latinCheck
+                        state.latinCheck
                             ? _buildLatinText(state.ayat![index])
                             : const SizedBox.shrink(),
-                        _terjemahCheck
+                        state.terjemahCheck
                             ? _buildTerjemahText(state.ayat![index])
                             : const SizedBox.shrink(),
                       ],
@@ -300,13 +400,6 @@ class _DetailScreen1State extends State<DetailScreen1> {
       ),
     );
   }
-
-  // Widget _itemList({
-  //   required BuildContext context,
-  //   required Ayat ayat,
-  //   required AyahModel surah,
-  // }) {
-  // }
 
   Color _getColorForLastReadItem(Ayat ayat, AyahModel surah) {
     final lastReadBox = Hive.box('last_read_quran');
@@ -342,19 +435,6 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
-  Widget _buildArabicText(Ayat ayat) {
-    return Text(
-      ayat.teksArab.toString(),
-      style: GoogleFonts.amiriQuran(
-        color: Colors.black,
-        fontWeight: FontWeight.w500,
-        fontSize: _arrfontSize.toDouble(),
-        height: 2.5,
-      ),
-      textAlign: TextAlign.end,
-    );
-  }
-
   Widget _buildLatinText(Ayat ayat) {
     return Container(
       margin: EdgeInsets.only(top: 10),
@@ -387,10 +467,10 @@ class _DetailScreen1State extends State<DetailScreen1> {
     );
   }
 
- Widget _banner() {
+  Widget _banner() {
     return Consumer<QuranProvider>(builder: (context, state, _) {
       final ayat = state.result;
-      final String? link = state.getAudioFullLink(_selectedAudioSource);
+      final String? link = state.getAudioFullLink();
       return Stack(
         children: [
           Container(
@@ -532,157 +612,24 @@ class _DetailScreen1State extends State<DetailScreen1> {
     });
   }
 
+  // void _updateLatinCheck(bool value) {
+  //   setState(() {
+  //     _latinCheck = value;
+  //   });
+  // }
 
-  void _saveLastRead(AyahModel surah, int ayat) {
-    final lastReadBox = Hive.box('last_read_quran');
+  // void _updateTerjemahCheck(bool value) {
+  //   setState(() {
+  //     _terjemahCheck = value;
+  //   });
+  // }
 
-    // Check if the data already exists
-    if (lastReadBox.containsKey('last_read')) {
-      // If it exists, get the current data
-      final Map<dynamic, dynamic>? currentData = lastReadBox.get('last_read');
+  // void _updateQori(String value) {
+  //   setState(() {
+  //     _selectedAudioSource = value;
+  //   });
+  // }
 
-      // Update the relevant fields with the new data
-      currentData?['id'] = surah.nomor;
-      currentData?['nama_surah'] = surah.namaLatin;
-      currentData?['nomor_ayat'] = ayat;
-
-      // Put the updated data back into the box
-      lastReadBox.put('last_read', currentData);
-    } else {
-      // If the data does not exist, create a new entry
-      Map<dynamic, dynamic> lastReadData = {
-        "id": surah.nomor,
-        "nama_surah": surah.namaLatin,
-        "nomor_ayat": ayat,
-      };
-
-      lastReadBox.put('last_read', lastReadData);
-    }
-  }
-
-  void _updateFontSize(double value) {
-    setState(() {
-      _arrfontSize = value;
-    });
-  }
-
-  void _updateLatinCheck(bool value) {
-    setState(() {
-      _latinCheck = value;
-    });
-  }
-
-  void _updateTerjemahCheck(bool value) {
-    setState(() {
-      _terjemahCheck = value;
-    });
-  }
-
-  void _updateQori(String value) {
-    setState(() {
-      _selectedAudioSource = value;
-    });
-  }
-
-  Map<String, String> audioSources = {
-    "Abdullah Al-Juhany": "01",
-    "Abdul Muhsin Al-Qasim": "02",
-    "Abdurrahman as-Sudais": "03",
-    "Ibrahim Al-Dossari": "04",
-    "Misyari Rasyid Al-Afasi": "05"
-  };
-
-  void _showSettingDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Font Size: ${_arrfontSize.toInt()}"),
-                  const SizedBox(height: 16.0),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.format_size,
-                        size: 18, // Ukuran ikon kecil
-                      ),
-                      Expanded(
-                        child: Slider(
-                          value: _arrfontSize,
-                          min: 16.0,
-                          max: 30.0,
-                          divisions: 100,
-                          onChanged: (double value) {
-                            setState(() {
-                              _updateFontSize(value);
-                            });
-                          },
-                        ),
-                      ),
-                      const Icon(
-                        Icons.format_size,
-                        size: 25, // Ukuran ikon besar
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16.0),
-                  // Text("Checkbox List"),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CheckboxListTile(
-                          title: const Text('Latin'),
-                          value: _latinCheck,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _updateLatinCheck(newValue!);
-                            });
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: CheckboxListTile(
-                          title: const Text('Terjemah'),
-                          value: _terjemahCheck,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _updateTerjemahCheck(newValue!);
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  DropdownButton<String>(
-                    value: _selectedAudioSource,
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _updateQori(newValue);
-                          print(newValue);
-                        });
-                      }
-                    },
-                    items: audioSources.keys
-                        .map<DropdownMenuItem<String>>((String key) {
-                      return DropdownMenuItem<String>(
-                        value: audioSources[key],
-                        child: Text(key),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // void _showSettingDialog(BuildContext context) {
+  // }
 }

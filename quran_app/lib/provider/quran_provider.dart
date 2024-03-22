@@ -1,25 +1,43 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran_app/model/ayah_model.dart';
 import 'package:quran_app/viewmodel/ayah_viewmodel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum ResultState { loading, noData, hasData, error }
 
 class QuranProvider extends ChangeNotifier {
   final AyahViewModel ayahViewModel = AyahViewModel();
   final String id_surah;
+  late bool _latinCheck;
+  late bool _terjemahCheck;
+  late double _arabicFontSize;
+  late String _selectedAudioSource;
+  static const String _settingsKey = 'quran_settings';
+
+
 
   QuranProvider({required this.id_surah}) {
+    _loadSettings();
     _fetchAllAyah(id: id_surah);
   }
 
   late AyahModel _ayahsResult;
 
-
   late ResultState _state;
   String _message = '';
 
   String get message => _message;
+
+  double get arabicFontSize => _arabicFontSize;
+
+  bool get latinCheck => _latinCheck;
+  bool get terjemahCheck => _terjemahCheck;
+
+  String get audioSources => _selectedAudioSource;
+  Map<String, String> get audioListSources => _audioSources;
 
   AyahModel get result => _ayahsResult;
 
@@ -27,11 +45,65 @@ class QuranProvider extends ChangeNotifier {
 
   ResultState get state => _state;
 
-
-
   ConnectionState _connectionState = ConnectionState.none;
 
   ConnectionState get connectionState => _connectionState;
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final settingsJson = prefs.getString(_settingsKey);
+    if (settingsJson != null) {
+      final settings = jsonDecode(settingsJson);
+      _latinCheck = settings['latinCheck'] ?? true;
+      _terjemahCheck = settings['terjemahCheck'] ?? true;
+      _arabicFontSize = settings['arabicFontSize'] ?? 20.0;
+      _selectedAudioSource = settings['selectedAudioSource'] ?? "01";
+    } else {
+      _latinCheck = true;
+      _terjemahCheck = true;
+      _arabicFontSize = 20.0;
+      _selectedAudioSource = "01";
+    }
+    notifyListeners();
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final settings = {
+      'latinCheck': _latinCheck,
+      'terjemahCheck': _terjemahCheck,
+      'arabicFontSize': _arabicFontSize,
+      'selectedAudioSource': _selectedAudioSource
+    };
+    await prefs.setString(_settingsKey, jsonEncode(settings));
+    notifyListeners();
+  }
+
+  Future<void> updateLatinCheck(bool newValue) async {
+    _latinCheck = newValue;
+    await _saveSettings();
+  }
+
+  Future<void> updateTerjemahCheck(bool newValue) async {
+    _terjemahCheck = newValue;
+    await _saveSettings();
+  }
+
+  Future<void> setArabicFontSize(double fontSize) async {
+    _arabicFontSize = fontSize;
+    await _saveSettings();
+  }
+
+  Future<void> updateSelectedAudio(String audio) async {
+    _selectedAudioSource = audio;
+    await _saveSettings();
+  }
+
+
+  double onSettingChanged() {
+    notifyListeners();
+    return _arabicFontSize;
+  }
 
   Future<void> _fetchAllAyah({required String id}) async {
     try {
@@ -61,8 +133,8 @@ class QuranProvider extends ChangeNotifier {
     _fetchAllAyah(id: id_surah);
   }
 
-  String? getAudioFullLink(String selectedAudioSource) {
-    switch (selectedAudioSource) {
+  String? getAudioFullLink() {
+    switch (_selectedAudioSource) {
       case '01':
         return _ayahsResult.audioFull?.s01?.toString();
       case '02':
@@ -80,8 +152,8 @@ class QuranProvider extends ChangeNotifier {
     }
   }
 
-   String? getAudioAyatLink(String selectedAudioSource, Ayat ayat) {
-    switch (selectedAudioSource) {
+  String? getAudioAyatLink(Ayat ayat) {
+    switch (_selectedAudioSource) {
       case '01':
         return ayat.audio!.s01.toString();
       case '02':
@@ -111,4 +183,25 @@ class QuranProvider extends ChangeNotifier {
       print("Error Loading Audio Source: $e");
     }
   }
+
+  final Map<String, String> _audioSources = {
+    "Abdullah Al-Juhany": "01",
+    "Abdul Muhsin Al-Qasim": "02",
+    "Abdurrahman as-Sudais": "03",
+    "Ibrahim Al-Dossari": "04",
+    "Misyari Rasyid Al-Afasi": "05"
+  };
+
+
+
+
+
+
+
+
+
+
 }
+
+
+
