@@ -41,6 +41,7 @@ class QuranProvider extends ChangeNotifier {
 
   AyahModel get result => _ayahsResult;
 
+
   List<Ayat>? get ayat => _ayahsResult.ayat;
 
   ResultState get state => _state;
